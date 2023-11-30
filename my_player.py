@@ -2,7 +2,6 @@ from player_abalone import PlayerAbalone
 from seahorse.game.action import Action
 from seahorse.game.game_state import GameState
 from seahorse.utils.custom_exceptions import MethodNotImplementedError
-import random
 
 class MyPlayer(PlayerAbalone):
     """
@@ -35,46 +34,36 @@ class MyPlayer(PlayerAbalone):
         Returns:
             Action: selected feasible action
         """
-        # print(current_state.is_done())
-        # # print(current_state.check_action())
-        # print(current_state.compute_next_player())
-        # print(current_state.generate_possible_actions())
-        # print(current_state.get_next_player())
-        # print(current_state.get_players())
-
-
-        # possible_actions = current_state.get_possible_actions()
-        # random.seed("seahorse")
-        # if kwargs:
-        #     pass
-        # return random.choice(list(possible_actions))
-        
+        # Prendre les actions possibles de l'état initial     
         possible_actions = current_state.get_possible_actions()
+        # Initialiser la meilleure action à None ainsi que le meilleur score à -inf (valeur la plus basse pour le maximiseur)
         best_action = None
-        best_score = float('-inf')  # Initialize with negative infinity for maximization
-        print("1111111")
+        best_score = float('-inf')
+        # Itérer sur toutes les actions possibles pour descendre dans l'arbre d'états
         for action in possible_actions:
-            # Apply the action to get the next state
+            # Passer au prochain état après avoir appliquer l'action
             next_state = action.get_next_game_state()
-            print("22222222")
-            # Use minimax to find the score for this move
-            score = self.minimax(next_state, depth=3, maximizing_player=False)
+            # Utiliser l'algorithme de minimax pour récursivement traverser les états de l'arbre
+            # Depth est la profondeur de la recherche avant de remonter un score
+            score = self.minimax(next_state, depth=1, maximizing_player=True)
 
-            # Update the best move if a higher score is found
+            # Si un meilleur score est trouvé, mettre à jour le meilleur score avec l'action associée
             if score > best_score:
                 best_score = score
                 best_action = action
-
+        print(best_score)
+        print(best_action)
+        # Retourner la meilleure action à faire
         return best_action
-
+    
+    # Algorithme minimax
     def minimax(self, state: GameState, depth: int, maximizing_player: bool) -> int:
+        #Si nous avons fini de découvrir ou il n'y a plus d'états à découvrir (fin de partie)
         if depth == 0 or state.is_done():
-            # Base case: evaluate the state
-            return self.evaluate_state(state)
-
+            # On évalue le score de l'état avec la fonction heuristique
+            return self.value_state(state)
+        # Si le tour est au maximiseur, on maximise le score
         if maximizing_player:
-            # Maximize the score for the maximizing player
-            print("333333333")
             max_score = float('-inf')
             for action in state.get_possible_actions():
                 next_state = action.get_next_game_state()
@@ -82,8 +71,7 @@ class MyPlayer(PlayerAbalone):
                 max_score = max(max_score, score)
             return max_score
         else:
-            # Minimize the score for the minimizing player
-            print("44444444")
+            # Si le tour est au minimiseur, on minimise le score
             min_score = float('inf')
             for action in state.get_possible_actions():
                 next_state = action.get_next_game_state()
@@ -91,8 +79,45 @@ class MyPlayer(PlayerAbalone):
                 min_score = min(min_score, score)
             return min_score
 
-    def evaluate_state(self, state: GameState) -> int:
-        # heuristic function
-        # This function should return a numerical score indicating the desirability of the state
-        # Positive values indicate an advantage for the maximizing player, and negative values for the minimizing player
-        return random.randint(1,100)
+    # Fonction heuristique pour l'évaluation d'un état
+    def value_state(self, state: GameState) -> int:
+        #number of pieces
+        #center control
+        #mobility
+
+        # Weight parameters for the heuristic components
+        piece_count_weight = 1.0
+        # center_control_weight = 1.5
+        # mobility_weight = 0.5
+
+        # Evaluate piece count
+        # print(state.get_rep().get_env())
+        piece_count = len(state.get_rep().get_env())  # Adjust if necessary based on your GameState implementation
+        # print(piece_count)
+        # print(self.get_id())
+        # print(self.get_name())
+        # print(self.get_piece_type())
+        # # Evaluate center control
+        # center_control = sum(1 for piece in state.get_rep().get_pieces() if state.is_in_center(piece.get_position()))
+
+        # # Evaluate mobility
+        # mobility = sum(len(state.get_valid_moves(piece)) for piece in state.get_rep().get_pieces())
+
+        # # Combine the components with their respective weights
+        # score = (
+        #     piece_count_weight * piece_count +
+        #     center_control_weight * center_control +
+        #     mobility_weight * mobility
+        # )
+        score = piece_count_weight*piece_count
+
+        return score
+    
+#     # Example is_in_center function (adjust based on the actual structure of your board)
+
+#  def is_in_center(piece_position):
+#     center_row_start, center_row_end = 4, 11
+#     center_col_start, center_col_end = 4, 11
+#     row, col = piece_position  # Adjust based on your GameState implementation
+
+#     return center_row_start <= row <= center_row_end and center_col_start <= col <= center_col_end
