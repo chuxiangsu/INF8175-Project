@@ -51,8 +51,8 @@ class MyPlayer(PlayerAbalone):
             if score > best_score:
                 best_score = score
                 best_action = action
-        print(best_score)
-        print(best_action)
+        # print(best_score)
+        # print(best_action)
         # Retourner la meilleure action à faire
         return best_action
     
@@ -81,36 +81,29 @@ class MyPlayer(PlayerAbalone):
 
     # Fonction heuristique pour l'évaluation d'un état
     def value_state(self, state: GameState) -> int:
-        #number of pieces
-        #center control
-        #mobility
-
-        # Weight parameters for the heuristic components
+        # Coefficient d'importance attribué à chaque critère heuristique
         piece_count_weight = 1.0
         # center_control_weight = 1.5
         # mobility_weight = 0.5
 
-        # Evaluate piece count
-        # print(state.get_rep().get_env())
-        piece_count = len(state.get_rep().get_env())  # Adjust if necessary based on your GameState implementation
-        # print(piece_count)
-        # print(self.get_id())
-        # print(self.get_name())
-        # print(self.get_piece_type())
+        # Critère pour le compte de pièces de notre joueur vs le joueur adverse
+        piece_count_player = 14 - abs(state.get_player_score(self))
+        piece_count_adversary = 14 - abs(next(value for key, value in state.get_scores().items() if key != self.get_id))
+        piece_count_heuristic = piece_count_player - piece_count_adversary
+
         # # Evaluate center control
         # center_control = sum(1 for piece in state.get_rep().get_pieces() if state.is_in_center(piece.get_position()))
+
 
         # # Evaluate mobility
         # mobility = sum(len(state.get_valid_moves(piece)) for piece in state.get_rep().get_pieces())
 
         # # Combine the components with their respective weights
-        # score = (
-        #     piece_count_weight * piece_count +
-        #     center_control_weight * center_control +
+        score = (
+            piece_count_weight*piece_count_heuristic
+        #     + center_control_weight * center_control +
         #     mobility_weight * mobility
-        # )
-        score = piece_count_weight*piece_count
-
+        )
         return score
     
 #     # Example is_in_center function (adjust based on the actual structure of your board)
@@ -121,3 +114,6 @@ class MyPlayer(PlayerAbalone):
 #     row, col = piece_position  # Adjust based on your GameState implementation
 
 #     return center_row_start <= row <= center_row_end and center_col_start <= col <= center_col_end
+
+# TO GET number total of pieces on board at any state:
+# len(state.get_rep().get_env())/2
