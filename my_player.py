@@ -24,6 +24,12 @@ class MyPlayer(PlayerAbalone):
 
 
     def compute_action(self, current_state: GameState, **kwargs) -> Action:
+        # [print(*x) for x in current_state.get_rep().get_grid()] 
+        # [print(a,b.__dict__) for a,b in current_state.get_rep().env.items()]
+        # print(current_state.get_rep())
+        # print(current_state.get_rep().get_grid())
+        # print(current_state.get_rep().env.items())
+
         """
         Function to implement the logic of the player.
 
@@ -58,7 +64,7 @@ class MyPlayer(PlayerAbalone):
     
     # Algorithme minimax
     def minimax(self, state: GameState, depth: int, maximizing_player: bool) -> int:
-        #Si nous avons fini de découvrir ou il n'y a plus d'états à découvrir (fin de partie)
+        # Si nous avons fini de découvrir ou il n'y a plus d'états à découvrir (fin de partie)
         if depth == 0 or state.is_done():
             # On évalue le score de l'état avec la fonction heuristique
             return self.value_state(state)
@@ -83,37 +89,35 @@ class MyPlayer(PlayerAbalone):
     def value_state(self, state: GameState) -> int:
         # Coefficient d'importance attribué à chaque critère heuristique
         piece_count_weight = 1.0
-        # center_control_weight = 1.5
+        center_control_weight = 1.5
         # mobility_weight = 0.5
 
         # Critère pour le compte de pièces de notre joueur vs le joueur adverse
         piece_count_player = 14 - abs(state.get_player_score(self))
-        piece_count_adversary = 14 - abs(next(value for key, value in state.get_scores().items() if key != self.get_id))
+        piece_count_adversary = 14 - abs(next(value for key, value in state.get_scores().items() if key != self.get_id()))
         piece_count_heuristic = piece_count_player - piece_count_adversary
 
-        # # Evaluate center control
-        # center_control = sum(1 for piece in state.get_rep().get_pieces() if state.is_in_center(piece.get_position()))
+        # Nombre de pièces dans le centre stratégique de notre joueur vs le joueur adverse
+        coordinates_list = [(coordinates, piece.__dict__) for coordinates, piece in state.get_rep().env.items()]
+        center_control_player = sum(1 for key, value_dict in coordinates_list if in_center(key) and value_dict["owner_id"] == self.get_id())
+        center_control_adversary = sum(1 for key, value_dict in coordinates_list if in_center(key) and value_dict["owner_id"] != self.get_id())
+        center_control_heuristic = center_control_player-center_control_adversary
 
+        # Somme des coefficients des pièces dans terme de proximité du centre??
 
-        # # Evaluate mobility
+        # Evaluate mobility
         # mobility = sum(len(state.get_valid_moves(piece)) for piece in state.get_rep().get_pieces())
 
         # # Combine the components with their respective weights
         score = (
-            piece_count_weight*piece_count_heuristic
-        #     + center_control_weight * center_control +
-        #     mobility_weight * mobility
+            piece_count_weight*piece_count_heuristic+
+            center_control_weight * center_control_heuristic
+        #     + mobility_weight * mobility
         )
         return score
     
-#     # Example is_in_center function (adjust based on the actual structure of your board)
-
-#  def is_in_center(piece_position):
-#     center_row_start, center_row_end = 4, 11
-#     center_col_start, center_col_end = 4, 11
-#     row, col = piece_position  # Adjust based on your GameState implementation
-
-#     return center_row_start <= row <= center_row_end and center_col_start <= col <= center_col_end
-
-# TO GET number total of pieces on board at any state:
-# len(state.get_rep().get_env())/2
+def in_center(coordinates):
+    center_row_beginning, center_row_end = 6, 10
+    center_col_beginning, center_col_end = 2, 6
+    row, col = coordinates
+    return center_row_beginning <= row <= center_row_end and center_col_beginning <= col <= center_col_end
