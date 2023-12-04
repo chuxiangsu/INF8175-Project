@@ -89,10 +89,8 @@ class MyPlayer(PlayerAbalone):
     # Fonction heuristique pour l'évaluation d'un état
     def value_state(self, state: GameState) -> int:
         # Coefficient d'importance attribué à chaque critère heuristique
-        piece_count_weight = 2.0
+        piece_count_weight = 1.0
         center_control_weight = 1.5
-        exactly_three_weight = 1.0
-
         # mobility_weight = 0.5
 
         # Critère pour le compte de pièces de notre joueur vs le joueur adverse
@@ -106,31 +104,15 @@ class MyPlayer(PlayerAbalone):
         center_control_adversary = sum(1 for key, value_dict in coordinates_list if in_center(key) and value_dict["owner_id"] != self.get_id())
         center_control_heuristic = center_control_player - center_control_adversary
 
-        # Trois pièces ou plus qui sont alignées
-        my_coordinates = [coordinate for coordinate, piece in coordinates_list if piece['owner_id'] == self.get_id()]
-        having_three_in_row = []
-        for piece in my_coordinates:
-            having_three_in_row += have_three(piece, my_coordinates)
-        to_remove = set()
-        for i in range(len(having_three_in_row)):
-            for j in range(i + 1, len(having_three_in_row)):
-                if more_than_one_similar_coordinate(having_three_in_row[i], having_three_in_row[j]):
-                    to_remove.add(i)
-                    to_remove.add(j)
-        exactly_three = [having_three_in_row[i] for i in range(len(having_three_in_row)) if i not in to_remove]
-        exactly_three_heuristic = len(exactly_three)
+        # Somme des coefficients des pièces dans terme de proximité du centre??
 
         # Evaluate mobility
         # mobility = sum(len(state.get_valid_moves(piece)) for piece in state.get_rep().get_pieces())
 
         # # Combine the components with their respective weights
-        print('1', piece_count_weight * piece_count_heuristic)
-        print('2', center_control_weight * center_control_heuristic)
-        print('3', exactly_three_weight * exactly_three_heuristic)
         score = (
             piece_count_weight * piece_count_heuristic +
-            center_control_weight * center_control_heuristic +
-            exactly_three_weight * exactly_three_heuristic
+            center_control_weight * center_control_heuristic
         #     + mobility_weight * mobility
         )
         return score
@@ -140,24 +122,3 @@ def in_center(coordinates):
     center_col_beginning, center_col_end = 2, 6
     row, col = coordinates
     return center_row_beginning <= row <= center_row_end and center_col_beginning <= col <= center_col_end
-
-def more_than_one_similar_coordinate(tup1, tup2):
-    similar_count = 0
-    for t1 in tup1:
-        if t1 in tup2:
-            similar_count += 1
-    return similar_count > 1
-
-def have_three(position, position_list):
-    valid_three = []
-    i,j = position
-    if (i+1, j+1) in position_list and (i-1, j-1) in position_list:
-        valid_three.append([(i+1, j+1), (i,j), (i-1, j-1)])
-    if (i+1, j-1) in position_list and (i-1, j+1) in position_list:
-        valid_three.append([(i+1, j-1), (i,j), (i-1, j+1)])
-    if (i+2, j) in position_list and (i-2, j) in position_list:
-        valid_three.append([(i+2, j), (i,j), (i-2, j)])
-    return valid_three
-
-
-
