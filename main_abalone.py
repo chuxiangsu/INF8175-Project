@@ -4,6 +4,7 @@ import os
 from os.path import basename, splitext, dirname
 import platform
 import sys
+import utils
 
 from loguru import logger
 from board_abalone import BoardAbalone
@@ -90,6 +91,20 @@ def play(player1, player2, log_level, port, address, gui, record, gui_path, conf
     if record :
         listeners.append(StateRecorder())
     master.record_game(listeners=listeners)
+
+    #save infos
+    score_p1 = master.get_scores()[player1.get_id()]
+    score_p2 = master.get_scores()[player2.get_id()]
+
+    if score_p1 > score_p2:
+        a = 'player1'
+    elif score_p1 < score_p2:
+        a = 'player2'
+    else:
+        a = 'match nul'
+
+    print('aaaaa', a, score_p1, score_p2)
+    utils.export_data('gameTest', 'playerRandom', 'playerRandom', a, score_p1, score_p2)
 
 if __name__=="__main__":
 

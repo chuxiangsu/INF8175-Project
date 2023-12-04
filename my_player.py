@@ -89,10 +89,10 @@ class MyPlayer(PlayerAbalone):
     # Fonction heuristique pour l'évaluation d'un état
     def value_state(self, state: GameState) -> int:
         # Coefficient d'importance attribué à chaque critère heuristique
-        piece_count_weight = 2.0
-        center_control_weight = 2.0
+        piece_count_weight = 10.0
+        center_control_weight = 3.0
         exactly_three_weight = 1.5
-        groups_weight = 0.25
+        groups_weight = 0.1
         # mobility_weight = 0.5
 
         # Critère pour le compte de pièces de notre joueur vs le joueur adverse
@@ -109,53 +109,33 @@ class MyPlayer(PlayerAbalone):
         # Trois pièces ou plus qui sont alignées
         coordinates_player = [coordinate for coordinate, piece in coordinates_list if
                               piece['owner_id'] == self.get_id()]
-        coordinates_adversary = [coordinate for coordinate, piece in coordinates_list if
-                                 piece['owner_id'] == self.get_id()]
+
         having_three_in_row_player = []
         for piece in coordinates_player:
             having_three_in_row_player += have_three(piece, coordinates_player)
-
-        having_three_in_row_adversary = []
-        for piece in coordinates_adversary:
-            having_three_in_row_adversary += have_three(piece, coordinates_player)
 
         to_remove_player = {index for i, elem_i in enumerate(having_three_in_row_player)
                             for j, elem_j in enumerate(having_three_in_row_player)
                             if i < j and more_than_one_similar_coordinate(elem_i, elem_j)
                             for index in (i, j)}
 
-        to_remove_adversary = {index for i, elem_i in enumerate(having_three_in_row_adversary)
-                               for j, elem_j in enumerate(having_three_in_row_adversary)
-                               if i < j and more_than_one_similar_coordinate(elem_i, elem_j)
-                               for index in (i, j)}
-
         exactly_three_player = [having_three_in_row_player[i]
                                 for i in range(len(having_three_in_row_player))
                                 if i not in to_remove_player]
 
-        exactly_three_adversary = [having_three_in_row_adversary[i]
-                                for i in range(len(having_three_in_row_adversary))
-                                if i not in to_remove_adversary]
-
-        exactly_three_heuristic = len(exactly_three_player) - len(exactly_three_adversary)
-
+        exactly_three_heuristic = len(exactly_three_player)
 
         # Rester coller ensemble
         groups = []
+        numbers_neighbours = 0
         for piece in coordinates_player:
             i, j = piece
             neighbours = [neighbour for _, neighbour in state.get_neighbours(i, j).values() if
                           neighbour in coordinates_player]
             add_to_group(groups, piece, neighbours)
-
-        groups = merge_groups(groups)
-        groups_heuristic = 14 - len(groups)
-
-        print(piece_count_weight * piece_count_heuristic,
-            center_control_weight * center_control_heuristic,
-            exactly_three_weight * exactly_three_heuristic,
-            groups_weight * groups_heuristic)
-
+            numbers_neighbours += len(neighbours)
+        groups_heuristic =  (14 - len(groups))
+        numbers_neighbours
         score = (
             piece_count_weight * piece_count_heuristic +
             center_control_weight * center_control_heuristic +
