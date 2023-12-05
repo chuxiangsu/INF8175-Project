@@ -45,25 +45,25 @@ class MyPlayer(PlayerAbalone):
         # Initialiser la meilleure action à None ainsi que le meilleur score à -inf (valeur la plus basse pour le maximiseur)
         best_action = None
         best_score = float('-inf')
+        # Initialiser le alpha et le beta
+        alpha = float('-inf')
+        beta = float('inf')
         # Itérer sur toutes les actions possibles pour descendre dans l'arbre d'états
         for action in possible_actions:
             # Passer au prochain état après avoir appliquer l'action
             next_state = action.get_next_game_state()
             # Utiliser l'algorithme de minimax pour récursivement traverser les états de l'arbre
             # Depth est la profondeur de la recherche avant de remonter un score
-            score = self.minimax(next_state, depth=1, maximizing_player=True)
-
+            score = self.minimax(next_state, depth=2, alpha = alpha, beta = beta, maximizing_player=True)
             # Si un meilleur score est trouvé, mettre à jour le meilleur score avec l'action associée
             if score > best_score:
                 best_score = score
                 best_action = action
-        # print(best_score)
-        # print(best_action)
         # Retourner la meilleure action à faire
         return best_action
     
     # Algorithme minimax
-    def minimax(self, state: GameState, depth: int, maximizing_player: bool) -> int:
+    def minimax(self, state: GameState, depth: int, alpha: float, beta: float, maximizing_player: bool) -> int:
         # Si nous avons fini de découvrir ou il n'y a plus d'états à découvrir (fin de partie)
 
         if depth == 0 or state.is_done():
@@ -74,16 +74,24 @@ class MyPlayer(PlayerAbalone):
             max_score = float('-inf')
             for action in state.get_possible_actions():
                 next_state = action.get_next_game_state()
-                score = self.minimax(next_state, depth - 1, False)
+                score = self.minimax(next_state, depth - 1, alpha, beta, False)
                 max_score = max(max_score, score)
+                alpha = max(alpha, score)
+                # Élagage alpha-beta
+                if beta <= alpha:
+                    break
             return max_score
         else:
             # Si le tour est au minimiseur, on minimise le score
             min_score = float('inf')
             for action in state.get_possible_actions():
                 next_state = action.get_next_game_state()
-                score = self.minimax(next_state, depth - 1, True)
+                score = self.minimax(next_state, depth - 1, alpha, beta, True)
                 min_score = min(min_score, score)
+                beta = min(beta, score)
+                # Élagage alpha-beta
+                if beta <= alpha:
+                    break
             return min_score
 
     # Fonction heuristique pour l'évaluation d'un état
@@ -125,7 +133,7 @@ class MyPlayer(PlayerAbalone):
 
         exactly_three_heuristic = len(exactly_three_player)
 
-        # Rester coller ensemble
+        # Rester coller ensemble en groupes
         groups = []
         numbers_neighbours = 0
         for piece in coordinates_player:
@@ -188,5 +196,3 @@ def merge_groups(groups):
                     merged = True
         groups = [group for group in groups if group]
     return groups
-
-
