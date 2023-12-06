@@ -101,7 +101,6 @@ class MyPlayer(PlayerAbalone):
         center_control_weight = 3.0
         exactly_three_weight = 1.5
         groups_weight = 0.1
-        # mobility_weight = 0.5
 
         # Critère pour le compte de pièces de notre joueur vs le joueur adverse
         piece_count_player = 14 - abs(state.get_player_score(self))
@@ -144,12 +143,12 @@ class MyPlayer(PlayerAbalone):
             numbers_neighbours += len(neighbours)
         groups_heuristic =  (14 - len(groups))
         numbers_neighbours
+        
         score = (
             piece_count_weight * piece_count_heuristic +
             center_control_weight * center_control_heuristic +
             exactly_three_weight * exactly_three_heuristic +
             groups_weight * groups_heuristic
-        #     + mobility_weight * mobility
         )
         return score
 
