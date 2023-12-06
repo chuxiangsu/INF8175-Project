@@ -3,6 +3,8 @@ from seahorse.game.action import Action
 from seahorse.game.game_state import GameState
 from seahorse.utils.custom_exceptions import MethodNotImplementedError
 
+
+
 class MyPlayer(PlayerAbalone):
     """
     Player class for Abalone game.
@@ -50,49 +52,69 @@ class MyPlayer(PlayerAbalone):
         beta = float('inf')
         # Itérer sur toutes les actions possibles pour descendre dans l'arbre d'états
         for action in possible_actions:
+
             # Passer au prochain état après avoir appliquer l'action
             next_state = action.get_next_game_state()
+
             # Utiliser l'algorithme de minimax pour récursivement traverser les états de l'arbre
             # Depth est la profondeur de la recherche avant de remonter un score
-            score = self.minimax(next_state, depth=2, alpha = alpha, beta = beta, maximizing_player=True)
+
+            player_id = self.get_id()
+            all_states_current = [(coordinates, piece.__dict__) for coordinates, piece in
+                                  next_state.get_rep().env.items()]
+            my_states_current = len({coordinate for coordinate, piece in all_states_current if
+                                 piece['owner_id'] == player_id})
+
+            score = self.minimax(my_states_current, next_state, depth=2, alpha = alpha, beta = beta, maximizing_player=True)
+
             # Si un meilleur score est trouvé, mettre à jour le meilleur score avec l'action associée
             if score > best_score:
                 best_score = score
                 best_action = action
         # Retourner la meilleure action à faire
         return best_action
-    
-    # Algorithme minimax
-    def minimax(self, state: GameState, depth: int, alpha: float, beta: float, maximizing_player: bool) -> int:
-        # Si nous avons fini de découvrir ou il n'y a plus d'états à découvrir (fin de partie)
 
-        if depth == 0 or state.is_done():
-            # On évalue le score de l'état avec la fonction heuristique
-            return self.value_state(state)
-        # Si le tour est au maximiseur, on maximise le score
-        if maximizing_player:
-            max_score = float('-inf')
-            for action in state.get_possible_actions():
-                next_state = action.get_next_game_state()
-                score = self.minimax(next_state, depth - 1, alpha, beta, False)
-                max_score = max(max_score, score)
-                alpha = max(alpha, score)
-                # Élagage alpha-beta
-                if beta <= alpha:
-                    break
-            return max_score
-        else:
-            # Si le tour est au minimiseur, on minimise le score
-            min_score = float('inf')
-            for action in state.get_possible_actions():
-                next_state = action.get_next_game_state()
-                score = self.minimax(next_state, depth - 1, alpha, beta, True)
-                min_score = min(min_score, score)
-                beta = min(beta, score)
-                # Élagage alpha-beta
-                if beta <= alpha:
-                    break
-            return min_score
+
+
+    # Algorithme minimax
+    def minimax(self, my_states_current: int, state: GameState, depth: int, alpha: float, beta: float, maximizing_player: bool) -> int:
+
+        player_id = self.get_id()
+        all_states_next = [(coordinates, piece.__dict__) for coordinates, piece in state.get_rep().env.items()]
+        my_states_next = len({coordinate for coordinate, piece in all_states_next if
+                          piece['owner_id'] == player_id})
+        # Si nous avons fini de découvrir ou il n'y a plus d'états à découvrir (fin de partie)
+        if my_states_next == my_states_current:
+            if depth == 1 or state.is_done():
+                # On évalue le score de l'état avec la fonction heuristique
+                return self.value_state(state)
+
+            # Si le tour est au maximiseur, on maximise le score
+            if maximizing_player:
+                max_score = float('-inf')
+                for action in state.get_possible_actions():
+                    next_state = action.get_next_game_state()
+                    score = self.minimax(my_states_next, next_state, depth - 1, alpha, beta, False)
+                    if score:
+                        max_score = max(max_score, score)
+                        alpha = max(alpha, score)
+                        # Élagage alpha-beta
+                        if beta <= alpha:
+                            break
+                return max_score
+            else:
+                # Si le tour est au minimiseur, on minimise le score
+                min_score = float('inf')
+                for action in state.get_possible_actions():
+                    next_state = action.get_next_game_state()
+                    score = self.minimax(my_states_next, next_state, depth - 1, alpha, beta, True)
+                    if score:
+                        min_score = min(min_score, score)
+                        beta = min(beta, score)
+                        # Élagage alpha-beta
+                        if beta <= alpha:
+                            break
+                return min_score
 
     # Fonction heuristique pour l'évaluation d'un état
     def value_state(self, state: GameState) -> int:
@@ -128,6 +150,11 @@ class MyPlayer(PlayerAbalone):
         groups_heuristic = 14 - len(groups)
         neighbours_heuristic = numbers_neighbours
 
+        '''
+        print(
+            piece_count_heuristic, center_control_heuristic, exactly_three_heuristic, groups_heuristic,
+            neighbours_heuristic
+        )'''
 
         score = (
             piece_count_weight * piece_count_heuristic +
