@@ -51,7 +51,7 @@ class MyPlayer(PlayerAbalone):
             next_state = action.get_next_game_state()
             # Utiliser l'algorithme de minimax pour récursivement traverser les états de l'arbre
             # Depth est la profondeur de la recherche avant de remonter un score
-            score = self.minimax(next_state, depth=2, maximizing_player=True)
+            score = self.minimax(next_state, depth=1, maximizing_player=True)
 
             # Si un meilleur score est trouvé, mettre à jour le meilleur score avec l'action associée
             if score > best_score:

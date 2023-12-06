@@ -40,7 +40,7 @@ class MyPlayer(PlayerAbalone):
         Returns:
             Action: selected feasible action
         """
-        # Prendre les actions possibles de l'état initial     
+        # Prendre les actions possibles de l'état initial
         possible_actions = current_state.get_possible_actions()
         # Initialiser la meilleure action à None ainsi que le meilleur score à -inf (valeur la plus basse pour le maximiseur)
         best_action = None
@@ -101,98 +101,63 @@ class MyPlayer(PlayerAbalone):
         center_control_weight = 3.0
         exactly_three_weight = 1.5
         groups_weight = 0.1
-        # mobility_weight = 0.5
+        neighbours_weight = 0.01
 
-        # Critère pour le compte de pièces de notre joueur vs le joueur adverse
-        piece_count_player = 14 - abs(state.get_player_score(self))
-        piece_count_adversary = 14 - abs(next(value for key, value in state.get_scores().items() if key != self.get_id()))
-        piece_count_heuristic = piece_count_player - piece_count_adversary
+        player_id = self.get_id()
+        player_score = abs(state.get_player_score(self))
+        adversary_score = abs(next(value for key, value in state.get_scores().items() if key != player_id))
 
-        # Nombre de pièces dans le centre stratégique de notre joueur vs le joueur adverse
+        piece_count_heuristic = (14 - player_score) - (14 - adversary_score)
+
         coordinates_list = [(coordinates, piece.__dict__) for coordinates, piece in state.get_rep().env.items()]
-        center_control_player = sum(1 for key, value_dict in coordinates_list if in_center(key) and value_dict["owner_id"] == self.get_id())
-        center_control_adversary = sum(1 for key, value_dict in coordinates_list if in_center(key) and value_dict["owner_id"] != self.get_id())
-        center_control_heuristic = center_control_player - center_control_adversary
+        center_control_heuristic = sum(
+            in_center(key) and value_dict["owner_id"] == player_id for key, value_dict in coordinates_list) - sum(
+            in_center(key) and value_dict["owner_id"] != player_id for key, value_dict in coordinates_list)
 
-        # Trois pièces ou plus qui sont alignées
-        coordinates_player = [coordinate for coordinate, piece in coordinates_list if
-                              piece['owner_id'] == self.get_id()]
+        coordinates_player = {coordinate for coordinate, piece in coordinates_list if piece['owner_id'] == player_id}
+        exactly_three_heuristic = sum(have_three(piece, coordinates_player) for piece in coordinates_player)
 
-        having_three_in_row_player = []
-        for piece in coordinates_player:
-            having_three_in_row_player += have_three(piece, coordinates_player)
-
-        to_remove_player = {index for i, elem_i in enumerate(having_three_in_row_player)
-                            for j, elem_j in enumerate(having_three_in_row_player)
-                            if i < j and more_than_one_similar_coordinate(elem_i, elem_j)
-                            for index in (i, j)}
-
-        exactly_three_player = [having_three_in_row_player[i]
-                                for i in range(len(having_three_in_row_player))
-                                if i not in to_remove_player]
-
-        exactly_three_heuristic = len(exactly_three_player)
-
-        # Rester coller ensemble en groupes
         groups = []
         numbers_neighbours = 0
         for piece in coordinates_player:
-            i, j = piece
-            neighbours = [neighbour for _, neighbour in state.get_neighbours(i, j).values() if
-                          neighbour in coordinates_player]
+            neighbours = {neighbour for _, neighbour in state.get_neighbours(*piece).values() if
+                          neighbour in coordinates_player}
             add_to_group(groups, piece, neighbours)
             numbers_neighbours += len(neighbours)
-        groups_heuristic =  (14 - len(groups))
-        numbers_neighbours
+
+        groups_heuristic = 14 - len(groups)
+        neighbours_heuristic = numbers_neighbours
+
+
         score = (
             piece_count_weight * piece_count_heuristic +
             center_control_weight * center_control_heuristic +
             exactly_three_weight * exactly_three_heuristic +
-            groups_weight * groups_heuristic
-        #     + mobility_weight * mobility
+            groups_weight * groups_heuristic +
+            neighbours_weight * neighbours_heuristic
         )
         return score
 
-def in_center(coordinates):
-    center_row_beginning, center_row_end = 6, 10
-    center_col_beginning, center_col_end = 2, 6
-    row, col = coordinates
-    return center_row_beginning <= row <= center_row_end and center_col_beginning <= col <= center_col_end
 
-def more_than_one_similar_coordinate(tup1, tup2):
-    similar_count = 0
-    for t1 in tup1:
-        if t1 in tup2:
-            similar_count += 1
-    return similar_count > 1
+def in_center(coordinates):
+    return 6 <= coordinates[0] <= 10 and 2 <= coordinates[1] <= 6
+
 
 def have_three(position, position_list):
-    valid_three = []
-    i,j = position
-    if (i+1, j+1) in position_list and (i-1, j-1) in position_list:
-        valid_three.append([(i+1, j+1), (i,j), (i-1, j-1)])
-    if (i+1, j-1) in position_list and (i-1, j+1) in position_list:
-        valid_three.append([(i+1, j-1), (i,j), (i-1, j+1)])
-    if (i+2, j) in position_list and (i-2, j) in position_list:
-        valid_three.append([(i+2, j), (i,j), (i-2, j)])
-    return valid_three
+    i, j = position
+    return any([
+        (i+1, j+1) in position_list and (i-1, j-1) in position_list,
+        (i+1, j-1) in position_list and (i-1, j+1) in position_list,
+        (i+2, j) in position_list and (i-2, j) in position_list
+    ])
+
 
 def add_to_group(groups, piece, neighbours):
+    neighbours_list = list(neighbours)  # Convertir l'ensemble en liste
     for group in groups:
         if piece in group or any(neighbour in group for neighbour in neighbours):
-            group.update([piece] + neighbours)
+            group.update([piece] + neighbours_list)  # Concaténer la liste
             return
-    groups.append(set([piece] + neighbours))
+    groups.append(set([piece] + neighbours_list))  # Ajouter sous forme d'ensemble
 
-def merge_groups(groups):
-    merged = True
-    while merged:
-        merged = False
-        for i in range(len(groups)):
-            for j in range(i + 1, len(groups)):
-                if groups[i].intersection(groups[j]):
-                    groups[i].update(groups[j])
-                    groups[j] = set()
-                    merged = True
-        groups = [group for group in groups if group]
-    return groups
+
