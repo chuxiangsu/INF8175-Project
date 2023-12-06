@@ -88,9 +88,10 @@ def play(player1, player2, log_level, port, address, gui, record, gui_path, conf
         return
 
     listeners = [GUIClient(path=gui_path)]*gui
-    if record :
+    if record:
         listeners.append(StateRecorder())
     master.record_game(listeners=listeners)
+
 
     #save infos
     score_p1 = master.get_scores()[player1.get_id()]
