@@ -105,7 +105,7 @@ def play(player1, player2, log_level, port, address, gui, record, gui_path, conf
         a = 'match nul'
 
     print('aaaaa', a, score_p1, score_p2)
-    utils.export_data('gameTest', 'playerRandom', 'playerRandom', a, score_p1, score_p2)
+    utils.export_data('gametest1', 'player1', 'player2', a, score_p1, score_p2)
 
 if __name__=="__main__":
 
