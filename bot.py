@@ -109,7 +109,7 @@ class MyPlayer(PlayerAbalone):
         piece_count_weight = utils.read_json(self.bot_id, 'piece_count_weight', 'dataset1.json') / 29
         center_control_weight = utils.read_json(self.bot_id, 'center_control_weight', 'dataset1.json') / 27
         exactly_three_weight = utils.read_json(self.bot_id, 'exactly_three_weight', 'dataset1.json') / 14
-        groups_weight = utils.read_json(self.bot_id, 'groups_weight', 'dataset1.json')/ 13
+        groups_weight = utils.read_json(self.bot_id, 'groups_weight', 'dataset1.json') / 13
         neighbours_weight = utils.read_json(self.bot_id, 'neighbours_weight', 'dataset1.json') / 84
 
         player_id = self.get_id()

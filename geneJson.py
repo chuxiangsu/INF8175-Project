@@ -3,11 +3,11 @@ import json
 
 def generate_weights():
     weight_categories = [
-        ("piece_count_weight", 35, 100),
-        ("center_control_weight", 10, 100),
-        ("exactly_three_weight", 1, 100),
-        ("groups_weight", 1, 100),
-        ("neighbours_weight", 1, 100)
+        ("piece_count_weight", 40, 100),
+        ("center_control_weight", 5, 40),
+        ("exactly_three_weight", 5, 40),
+        ("groups_weight", 5, 40),
+        ("neighbours_weight", 5, 40)
     ]
 
     total_weight = 100
@@ -45,5 +45,5 @@ def save_to_json_file(data, file_name):
     with open(file_name, 'w') as file:
         json.dump(data, file, indent=4)
 
-data = generate_json_data(1, 40)
+data = generate_json_data(1, 30)
 save_to_json_file(data, "dataset1.json")
