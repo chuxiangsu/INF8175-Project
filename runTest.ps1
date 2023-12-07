@@ -1,11 +1,22 @@
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
-$firstPlayerType = "random_player_abalone.py"
-$secondPlayerType = "random_player_abalone.py"
-$iterationCount = 2
+$firstPlayerType = "bot.py"
+$secondPlayerType = "bot.py"
+$iterationCount = 1
+$white_id_interval = 1,3
+$black_id_interval = 1,3
+$name = "tester1"
 
-for ($i=0; $i -lt $iterationCount; $i++) {
-    python main_abalone.py -t local $firstPlayerType $secondPlayerType
-    Write-Host "Iteration $i complete."
+for ($w = $white_id_interval[0]; $w -le $white_id_interval[1]; $w++) {
+    for ($b = $black_id_interval[0]; $b -le $black_id_interval[1]; $b++) {
+        if ($w -eq $b) {
+            continue
+        }
+        for ($i = 0; $i -lt $iterationCount; $i++) {
+            python main_abalone.py -t local $firstPlayerType $secondPlayerType -g -w $w -b $b -name $name
+            Write-Host "Iteration $i complete for White ID $w and Black ID $b."
+        }
+    }
 }
 
 Write-Host "Script completed."
+

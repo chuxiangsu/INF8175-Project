@@ -4,6 +4,8 @@ import os
 from os.path import basename, splitext, dirname
 import platform
 import sys
+from typing import Optional, Any
+
 import utils
 
 from loguru import logger
@@ -18,7 +20,7 @@ from seahorse.game.game_layout.board import Piece
 from seahorse.utils.custom_exceptions import PlayerDuplicateError
 from argparse import RawTextHelpFormatter
 
-def play(player1, player2, log_level, port, address, gui, record, gui_path, config) :
+def play(player1, player2, log_level, port, address, gui, record, gui_path, config, white, black, testgame) :
     list_players = [player1, player2]
     init_scores = {player1.get_id(): 0, player2.get_id(): 0}
     dim = [17, 9]
@@ -104,8 +106,7 @@ def play(player1, player2, log_level, port, address, gui, record, gui_path, conf
     else:
         a = 'match nul'
 
-    print('aaaaa', a, score_p1, score_p2)
-    utils.export_data('gametest1', 'player1', 'player2', a, score_p1, score_p2)
+    utils.export_data(testgame, white, black, a, score_p1, score_p2)
 
 if __name__=="__main__":
 
@@ -138,6 +139,10 @@ if __name__=="__main__":
     parser.add_argument("-r","--record",action="store_true",default=False, help="Stores the succesive game states in a json file.\n\n")
     parser.add_argument("-l","--log",required=False,choices=["DEBUG","INFO"], default="DEBUG",help="\nSets the logging level.")
     parser.add_argument("players_list",nargs="*", help='The players')
+
+    parser.add_argument("-w", "--w", required = False, type = int, default = 1)
+    parser.add_argument("-b", "--b", required = False, type = int, default = 1)
+    parser.add_argument("-name", "--name", required=False, type=str, default="test")
     args=parser.parse_args()
 
     type = vars(args).get("type")
@@ -148,6 +153,10 @@ if __name__=="__main__":
     log_level = vars(args).get("log")
     list_players = vars(args).get("players_list")
     base_config = vars(args).get("config")
+
+    white_id = vars(args).get("w")
+    black_id = vars(args).get("b")
+    name_test = vars(args).get("name")
     time_limit = 15*60
 
     gui_path = os.path.join(dirname(os.path.abspath(__file__)),'GUI','index.html')
@@ -159,9 +168,9 @@ if __name__=="__main__":
         folder = dirname(list_players[1])
         sys.path.append(folder)
         player2_class = __import__(splitext(basename(list_players[1]))[0], fromlist=[None])
-        player1 = player1_class.MyPlayer("W", name=splitext(basename(list_players[0]))[0]+"_1", time_limit=time_limit)
-        player2 = player2_class.MyPlayer("B", name=splitext(basename(list_players[1]))[0]+"_2", time_limit=time_limit)
-        play(player1=player1, player2=player2, log_level=log_level, port=port, address=address, gui=gui, record=record, gui_path=gui_path, config=base_config)
+        player1 = player1_class.MyPlayer("W", name=splitext(basename(list_players[0]))[0]+"_1", time_limit=time_limit, bot_id=white_id)
+        player2 = player2_class.MyPlayer("B", name=splitext(basename(list_players[1]))[0]+"_2", time_limit=time_limit, bot_id=black_id)
+        play(player1=player1, player2=player2, log_level=log_level, port=port, address=address, gui=gui, record=record, gui_path=gui_path, config=base_config, white=white_id, black=black_id, testgame=name_test)
     elif type == "host_game" :
         folder = dirname(list_players[0])
         sys.path.append(folder)
@@ -193,4 +202,3 @@ if __name__=="__main__":
         player2 = InteractivePlayerProxy(PlayerAbalone("B", name="alice", time_limit=time_limit))
         player2.share_sid(player1)
         play(player1=player1, player2=player2, log_level=log_level, port=port, address=address, gui=False, record=record, gui_path=gui_path, config=base_config)
-        

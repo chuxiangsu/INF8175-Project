@@ -2,7 +2,7 @@ from player_abalone import PlayerAbalone
 from seahorse.game.action import Action
 from seahorse.game.game_state import GameState
 from seahorse.utils.custom_exceptions import MethodNotImplementedError
-
+import utils
 
 
 class MyPlayer(PlayerAbalone):
@@ -13,7 +13,7 @@ class MyPlayer(PlayerAbalone):
         piece_type (str): piece type of the player
     """
 
-    def __init__(self, piece_type: str, name: str = "bob", time_limit: float=60*15,*args) -> None:
+    def __init__(self, piece_type: str, name: str = "bob", time_limit: float=60*15,*args, bot_id) -> None:
         """
         Initialize the PlayerAbalone instance.
 
@@ -23,7 +23,7 @@ class MyPlayer(PlayerAbalone):
             time_limit (float, optional): the time limit in (s)
         """
         super().__init__(piece_type,name,time_limit,*args)
-
+        self.bot_id = bot_id
 
     def compute_action(self, current_state: GameState, **kwargs) -> Action:
         # [print(*x) for x in current_state.get_rep().get_grid()] 
@@ -65,7 +65,7 @@ class MyPlayer(PlayerAbalone):
             my_states_current = len({coordinate for coordinate, piece in all_states_current if
                                  piece['owner_id'] == player_id})
 
-            score = self.minimax(my_states_current, next_state, depth=2, alpha = alpha, beta = beta, maximizing_player=True)
+            score = self.minimax(my_states_current, next_state, depth=1, alpha = alpha, beta = beta, maximizing_player=True)
 
             # Si un meilleur score est trouvé, mettre à jour le meilleur score avec l'action associée
             if score > best_score:
@@ -119,11 +119,11 @@ class MyPlayer(PlayerAbalone):
     # Fonction heuristique pour l'évaluation d'un état
     def value_state(self, state: GameState) -> int:
         # Coefficient d'importance attribué à chaque critère heuristique
-        piece_count_weight = 10.0
-        center_control_weight = 3.0
-        exactly_three_weight = 1.5
-        groups_weight = 0.1
-        neighbours_weight = 0.01
+        piece_count_weight = utils.read_json(self.bot_id, 'piece_count_weight', 'dataset1.json') / 29
+        center_control_weight = utils.read_json(self.bot_id, 'center_control_weight', 'dataset1.json') / 27
+        exactly_three_weight = utils.read_json(self.bot_id, 'exactly_three_weight', 'dataset1.json') / 14
+        groups_weight = utils.read_json(self.bot_id, 'groups_weight', 'dataset1.json')/ 13
+        neighbours_weight = utils.read_json(self.bot_id, 'neighbours_weight', 'dataset1.json') / 84
 
         player_id = self.get_id()
         player_score = abs(state.get_player_score(self))
